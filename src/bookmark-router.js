@@ -2,6 +2,7 @@ const express = require('express');
 const { v4: uuid } = require('uuid');
 const logger = require('./logger');
 const { PORT } = require('./config');
+const validator = require('validator');
 
 const bookmarks = [{
   title: "google",
@@ -39,7 +40,13 @@ bookmarkRouter
     }
 
     // validate that URL is properly formatted
-      // code here
+    const validURL = validator.isURL(url);
+    if (validURL === false) {
+      logger.error('URL is not valid');
+      return res
+        .status(400)
+        .send('Invalid data');
+    }
 
     const id = uuid();
 
@@ -79,7 +86,23 @@ bookmarkRouter
     res.json(bookmark);
   })
   .delete((req, res) => {
+    const { id } = req.params;
 
-  })
+    // validate that bookmark exists
+    const bookmarkIndex = bookmarks.findIndex(bm => bm.id == id);    
+    if (bookmarkIndex === -1) {
+      logger.error(`Bookmark with id ${id} not found.`);
+      return res
+        .status(404)
+        .send('Not Found');
+    }
+
+    bookmarks.splice(bookmarkIndex, 1);
+
+    logger.info(`Bookmark with id ${id} deleted.`);
+    res
+      .status(204)
+      .end();
+  });
 
 module.exports = bookmarkRouter;
