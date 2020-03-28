@@ -1,4 +1,4 @@
-INSERT INTO bookmarks (title, site_url, site_description, rating)
+INSERT INTO bookmarks (title, url, description, rating)
 VALUES
   ('Google', 'www.google.com', 'most popular search engine', 5),
   ('Reddit', 'www.reddit.com', 'front page of the internet', 5),
