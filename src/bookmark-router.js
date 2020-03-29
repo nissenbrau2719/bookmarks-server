@@ -3,7 +3,6 @@ const { v4: uuid } = require('uuid');
 const logger = require('./logger');
 const { PORT } = require('./config');
 const validator = require('validator');
-const BookmarksService = require('./bookmarks-service');
 
 const bookmarks = [{
   title: "google",
@@ -20,7 +19,6 @@ const bodyParser = express.json();
 bookmarkRouter
   .route('/bookmarks')
   .get((req, res) => {
-    const knexInstance
     res.json(bookmarks)
   })
   .post(bodyParser, (req, res) => {
