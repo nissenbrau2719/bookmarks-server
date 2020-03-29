@@ -3,14 +3,14 @@ const { v4: uuid } = require('uuid');
 const logger = require('./logger');
 const { PORT } = require('./config');
 const validator = require('validator');
-
-const bookmarks = [{
-  title: "google",
-  url: "https://www.google.com",
-  description: "most popular search engine",
-  rating: 5,
-  id: 1
-}]
+const BookmarksService = require('./bookmarks-service');
+// const bookmarks = [{
+//   title: "google",
+//   url: "https://www.google.com",
+//   description: "most popular search engine",
+//   rating: 5,
+//   id: 1
+// }]
 
 const bookmarkRouter = express.Router();
 const bodyParser = express.json();
@@ -18,8 +18,13 @@ const bodyParser = express.json();
 //build routes to GET and POST at /bookmarks
 bookmarkRouter
   .route('/bookmarks')
-  .get((req, res) => {
-    res.json(bookmarks)
+  .get((req, res, next) => {
+    const knexInstance = req.app.get('db')
+    BookmarksService.getAllBookmarks(knexInstance)
+    .then(bookmarks => {
+      res.json(bookmarks)
+    })
+    .catch(next)
   })
   .post(bodyParser, (req, res) => {
     const { title, url, description="", rating=1 } = req.body;
@@ -72,18 +77,22 @@ bookmarkRouter
 //build routes to GET and DELETE at /bookmarks/:id
 bookmarkRouter
   .route('/bookmarks/:id')
-  .get((req, res) => {
+  .get((req, res, next) => {
     const { id } = req.params;
-    const bookmark = bookmarks.find(bm => bm.id == id);
-
-    if (!bookmark) {
-      logger.error(`Bookmark with id ${id} not found.`);
-      return res
-        .status(404)
-        .send('Bookmark not found');
-    }
-
-    res.json(bookmark);
+    const knexInstance = req.app.get('db')
+    BookmarksService.getById(knexInstance, id) 
+      .then(bookmark => {
+        if (!bookmark) {
+          logger.error(`Bookmark with id ${id} not found.`);
+          return res
+            .status(404)
+            .json({
+              error: { message: 'Bookmark not found' }
+            })
+        }
+        res.json(bookmark);
+      })
+      .catch(next)
   })
   .delete((req, res) => {
     const { id } = req.params;
