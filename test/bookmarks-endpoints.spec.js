@@ -1,7 +1,7 @@
 require('dotenv').config();
 const knex = require('knex');
 const app = require('../src/app');
-const { makeBookmarksArray } = require('./bookmarks.fixtures');
+const { makeBookmarksArray, makeMaliciousBookmark, makeSanitizedBookmark } = require('./bookmarks.fixtures');
 
 describe('Bookmarks Endpoints', function() {
   context('Given endpoint requests have proper authorization', () => {
@@ -48,6 +48,28 @@ describe('Bookmarks Endpoints', function() {
             .get('/bookmarks')
             .set('Authorization', 'Bearer ' + token)
             .expect(200, testBookmarks)
+        })
+      })
+
+      context(`Given one of the bookmarks in the database contains XSS attack`, () => {
+        const maliciousBookmark = makeMaliciousBookmark()
+        const expectedBookmark = makeSanitizedBookmark()
+
+        beforeEach('insert the malicious bookmark', () => {
+          return db
+            .into('bookmarks')
+            .insert(maliciousBookmark)
+        })
+
+        it('sanitizes any malicious content', () => {
+          return supertest(app)
+            .get('/bookmarks')
+            .set('Authorization', 'Bearer ' + token)
+            .expect(200)
+            .expect(res => {
+              expect(res.body[0].title).to.eql(expectedBookmark.title)
+              expect(res.body[0].description).to.eql(expectedBookmark.description)
+            })
         })
       })
     })

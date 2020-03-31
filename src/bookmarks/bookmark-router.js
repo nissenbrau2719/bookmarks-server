@@ -1,7 +1,7 @@
 const express = require('express');
 const { v4: uuid } = require('uuid');
-const logger = require('./logger');
-const { PORT } = require('./config');
+const logger = require('../logger');
+const { PORT } = require('../config');
 const validator = require('validator');
 const BookmarksService = require('./bookmarks-service');
 const xss = require('xss');
@@ -9,14 +9,23 @@ const xss = require('xss');
 const bookmarkRouter = express.Router();
 const bodyParser = express.json();
 
-//build routes to GET and POST at /bookmarks
 bookmarkRouter
   .route('/')
   .get((req, res, next) => {
     const knexInstance = req.app.get('db')
     BookmarksService.getAllBookmarks(knexInstance)
     .then(bookmarks => {
-      res.json(bookmarks)
+      let sanitizedBookmarks = []
+      for(const bookmark of bookmarks) {
+        sanitizedBookmarks.push({
+          title: xss(bookmark.title),
+          description: xss(bookmark.description),
+          id: bookmark.id,
+          url: bookmark.url,
+          rating: bookmark.rating
+        })
+      }
+      res.json(sanitizedBookmarks)
     })
     .catch(next)
   })
