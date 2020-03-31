@@ -4,20 +4,14 @@ const logger = require('./logger');
 const { PORT } = require('./config');
 const validator = require('validator');
 const BookmarksService = require('./bookmarks-service');
-// const bookmarks = [{
-//   title: "google",
-//   url: "https://www.google.com",
-//   description: "most popular search engine",
-//   rating: 5,
-//   id: 1
-// }]
+const xss = require('xss');
 
 const bookmarkRouter = express.Router();
 const bodyParser = express.json();
 
 //build routes to GET and POST at /bookmarks
 bookmarkRouter
-  .route('/bookmarks')
+  .route('/')
   .get((req, res, next) => {
     const knexInstance = req.app.get('db')
     BookmarksService.getAllBookmarks(knexInstance)
@@ -76,7 +70,7 @@ bookmarkRouter
 
 //build routes to GET and DELETE at /bookmarks/:id
 bookmarkRouter
-  .route('/bookmarks/:id')
+  .route('/:id')
   .get((req, res, next) => {
     const { id } = req.params;
     const knexInstance = req.app.get('db')
