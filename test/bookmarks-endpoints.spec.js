@@ -106,7 +106,7 @@ describe('Bookmarks Endpoints', function() {
       })
     })
 
-    describe.only(`POST /bookmarks`, () => {
+    describe(`POST /bookmarks`, () => {
       context('Given all required fields are filled out', () => {
         it('creates a bookmark with unique id, responding with 201 and the location', () => {
           const newBookmark = {
@@ -195,6 +195,45 @@ describe('Bookmarks Endpoints', function() {
                 .set('Authorization', 'Bearer ' + token)
                 .expect(postRes.body)
             )
+        })
+      })
+    })
+
+    describe.only('DELETE /bookmarks/:id', () => {
+      const testBookmarks = makeBookmarksArray()
+
+      beforeEach('insert bookmarks', () => {
+        return db
+          .into('bookmarks')
+          .insert(testBookmarks)
+      })
+
+      context('Given the bookmark to delete exists in the database', () => {
+        it('responds with 204 and removes the bookmark', () => {
+          const idToRemove = 4
+          const expectedBookmarks = testBookmarks.filter(bookmark => bookmark.id !== idToRemove)
+          return supertest(app)
+            .delete(`/bookmarks/${idToRemove}`)
+            .set('Authorization', 'Bearer ' + token)
+            .expect(204)
+            .then(res => 
+              supertest(app)
+              .get('/bookmarks')
+              .set('Authorization', 'Bearer ' + token)
+              .expect(expectedBookmarks)
+            )
+        })
+      })
+
+      context(`Given the bookmark to be deleted doesn't exist`, () => {
+        it('responds with 404 and an error message', () => {
+          const idToRemove = 1234567890
+          return supertest(app)
+            .delete(`/bookmarks/${idToRemove}`)
+            .set('Authorization', 'Bearer ' + token)
+            .expect(404, {
+              error: { message: 'Bookmark not found' }
+            })
         })
       })
     })
