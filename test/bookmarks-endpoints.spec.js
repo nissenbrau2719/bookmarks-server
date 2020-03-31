@@ -2,6 +2,7 @@ require('dotenv').config();
 const knex = require('knex');
 const app = require('../src/app');
 const { makeBookmarksArray, makeMaliciousBookmark, makeSanitizedBookmark } = require('./bookmarks.fixtures');
+const { PORT } = require('../src/config');
 
 describe('Bookmarks Endpoints', function() {
   context('Given endpoint requests have proper authorization', () => {
@@ -100,6 +101,38 @@ describe('Bookmarks Endpoints', function() {
             .get(`/bookmarks/${bookmarkId}`)
             .set('Authorization', 'Bearer ' + token)
             .expect(200, expectedBookmark)
+        })
+      })
+    })
+
+    describe(`POST /bookmarks`, () => {
+      context('Given all required fields are filled out', () => {
+        it('creates a bookmark with unique id, responding with 201 and the location', () => {
+          const newBookmark = {
+            title: 'Website name',
+            url: 'www.website.com',
+            rating: '1',
+            description: 'Test bookmark'
+          }
+          return supertest(app)
+            .post('/bookmarks')
+            .set('Authorization', 'Bearer ' + token)
+            .send(newBookmark)
+            .expect(201)
+            .expect(res => {
+              expect(res.body.title).to.eql(newBookmark.title)
+              expect(res.body.url).to.eql(newBookmark.url)
+              expect(res.body.rating).to.eql(newBookmark.rating)
+              expect(res.body.description).to.eql(newBookmark.description)
+              expect(res.body).to.have.property('id')
+              expect(res.headers.location).to.eql(`http://localhost:${PORT}/bookmarks/${res.body.id}`)
+            })
+            .then(postRes => 
+              supertest(app)
+              .get(`/bookmarks/${postRes.body.id}`)
+              .set('Authorization', 'Bearer ' + token)
+              .expect(postRes.body)
+            )
         })
       })
     })

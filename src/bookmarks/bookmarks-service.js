@@ -10,7 +10,9 @@ const BookmarksService = {
       .into('bookmarks')
       .insert(newBookmark)
       .returning('*')
-      .first()
+      .then(rows => {
+        return rows[0]
+      })
   },
 
   getById(knex, id) {

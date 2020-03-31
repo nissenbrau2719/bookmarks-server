@@ -12,8 +12,7 @@ const bodyParser = express.json();
 bookmarkRouter
   .route('/')
   .get((req, res, next) => {
-    const knexInstance = req.app.get('db')
-    BookmarksService.getAllBookmarks(knexInstance)
+    BookmarksService.getAllBookmarks(req.app.get('db'))
     .then(bookmarks => {
       let sanitizedBookmarks = []
       for(const bookmark of bookmarks) {
@@ -29,7 +28,7 @@ bookmarkRouter
     })
     .catch(next)
   })
-  .post(bodyParser, (req, res) => {
+  .post(bodyParser, (req, res, next) => {
     const { title, url, description="", rating=1 } = req.body;
 
     // validate request body
@@ -56,25 +55,23 @@ bookmarkRouter
         .send('Invalid data');
     }
 
-    const id = uuid();
-
-    const bookmark = {
-      id,
-      title,
-      url,
-      description,
-      rating
+    const newBookmark = {
+      title: xss(title),
+      url: url,
+      description: xss(description),
+      rating: rating
     };
 
-    bookmarks.push(bookmark);
+    BookmarksService.insertBookmark(req.app.get('db'), newBookmark)
+      .then(bookmark => {
+        res
+          .status(201)
+          .location(`http://localhost:${PORT}/bookmarks/${bookmark.id}`)
+          .json(bookmark)
 
-    logger.info(`Bookmark with id ${id} created`);
-
-    res
-      .status(201)
-      .location(`http//localhost:${PORT}/bookmarks/${id}`)
-      .json(bookmark);
-
+        logger.info(`Bookmark with id ${bookmark.id} created`)    
+      })
+      .catch(next)
   })
 
 //build routes to GET and DELETE at /bookmarks/:id
