@@ -199,7 +199,7 @@ describe('Bookmarks Endpoints', function() {
       })
     })
 
-    describe.only('DELETE /bookmarks/:id', () => {
+    describe('DELETE /bookmarks/:id', () => {
       const testBookmarks = makeBookmarksArray()
 
       beforeEach('insert bookmarks', () => {
