@@ -5,6 +5,7 @@ const { makeBookmarksArray, makeMaliciousBookmark, makeSanitizedBookmark } = req
 const { PORT } = require('../src/config');
 
 describe('Bookmarks Endpoints', function() {
+
   context('Given endpoint requests have proper authorization', () => {
     const token = process.env.API_TOKEN
 
@@ -105,7 +106,7 @@ describe('Bookmarks Endpoints', function() {
       })
     })
 
-    describe(`POST /bookmarks`, () => {
+    describe.only(`POST /bookmarks`, () => {
       context('Given all required fields are filled out', () => {
         it('creates a bookmark with unique id, responding with 201 and the location', () => {
           const newBookmark = {
@@ -132,6 +133,67 @@ describe('Bookmarks Endpoints', function() {
               .get(`/bookmarks/${postRes.body.id}`)
               .set('Authorization', 'Bearer ' + token)
               .expect(postRes.body)
+            )
+        })
+      })
+
+      context('A required field is missing from the posted bookmark', () => {
+        const requiredFields = [ 'url', 'title' ]
+
+        requiredFields.forEach(field => {
+          const newBookmark = {
+            title: 'Test bookmark',
+            url: 'www.testwebsite.com'
+          }
+
+          it(`responds with 400 and an error message when the '${field}' is missing`, () => {
+            delete newBookmark[field]
+            return supertest(app)
+              .post('/bookmarks')
+              .set('Authorization', 'Bearer ' + token)
+              .send(newBookmark)
+              .expect(400, {
+                error: { message: `${field} is required`}
+              })
+          })  
+        })
+      })
+
+      context(`the URL posted is not a valid URL`, () => {
+        const newBookmark = {
+          title: 'Test bookmark',
+          url: 'not a valid url'
+        }
+
+        it('responds with 400 and an error message', () => {
+          return supertest(app)
+            .post('/bookmarks')
+            .set('Authorization', 'Bearer ' + token)
+            .send(newBookmark)
+            .expect(400, {
+              error: { message: `url is not valid`}
+            })
+        })
+      })
+
+      context(`the bookmark posted has malicious XSS content`, () => {
+        const maliciousBookmark = makeMaliciousBookmark()
+        const expectedBookmark = makeSanitizedBookmark()
+        it('creates the bookmark but sanitizes the malicious content', () => {
+          return supertest(app)
+            .post('/bookmarks')
+            .set('Authorization', 'Bearer ' + token)
+            .send(maliciousBookmark)
+            .expect(201)
+            .expect(res => {
+              expect(res.body.title).to.eql(expectedBookmark.title)
+              expect(res.body.description).to.eql(expectedBookmark.description)
+            })
+            .then(postRes => 
+              supertest(app)
+                .get(`/bookmarks/${postRes.body.id}`)
+                .set('Authorization', 'Bearer ' + token)
+                .expect(postRes.body)
             )
         })
       })

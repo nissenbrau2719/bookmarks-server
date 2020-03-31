@@ -36,14 +36,18 @@ bookmarkRouter
       logger.error('Title is required');
       return res 
         .status(400)
-        .send('Invalid data');
+        .json({
+          error: { message: 'title is required' }
+        });
     }
 
     if (!url) {
       logger.error('URL is required');
       return res 
         .status(400)
-        .send('Invalid data');
+        .json({
+          error: { message: 'url is required' }
+        });
     }
 
     // validate that URL is properly formatted
@@ -52,7 +56,9 @@ bookmarkRouter
       logger.error('URL is not valid');
       return res
         .status(400)
-        .send('Invalid data');
+        .json({
+          error: { message: 'url is not valid' }
+        });
     }
 
     const newBookmark = {
