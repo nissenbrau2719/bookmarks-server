@@ -73,7 +73,7 @@ bookmarkRouter
         logger.info(`Bookmark with id ${bookmark.id} created`)
         res
           .status(201)
-          .location(`http://localhost:${PORT}/bookmarks/${bookmark.id}`)
+          .location(`http://localhost:${PORT}/api/bookmarks/${bookmark.id}`)
           .json(bookmark)
       })
       .catch(next)
@@ -116,6 +116,37 @@ bookmarkRouter
         res.status(204).end()
       })
       .catch(next)
-  });
+  })
+  .patch(bodyParser, (req, res, next) => {
+    const { title, url, rating, description } = req.body
+    const updatedBookmarkData = { title, url, rating, description }
+
+    const numberOfValues = Object.values(updatedBookmarkData).filter(Boolean).length
+    if (numberOfValues === 0) {
+      return res.status(400).json({
+        error: {
+          message: `Request body must contain an update to 'title', 'url', 'rating', or 'description'`
+        }
+      })
+    }
+
+    if(title) {
+      updatedBookmarkData.title = xss(title)
+    }
+
+    if(description) {
+      updatedBookmarkData.description = xss(description)
+    }
+
+    BookmarksService.updateBookmark(
+      req.app.get('db'), 
+      req.params.id, 
+      updatedBookmarkData
+    )
+      .then(numRowsAffected => {
+        res.status(204).end()
+      })
+      .catch(next)
+  })
 
 module.exports = bookmarkRouter;

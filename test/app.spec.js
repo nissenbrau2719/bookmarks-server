@@ -3,15 +3,15 @@ const app = require('../src/app');
 
 describe('App', () => {
   const token = process.env.API_TOKEN
-  it('GET / responds with 401 without proper authorization', () => {
+  it('GET /api responds with 401 without proper authorization', () => {
     return supertest(app)
-      .get('/')
+      .get('/api')
       .expect(401)
   })
 
-  it('GET / responds with 200 containing "Hello, Paul!" with proper authorization token', () => {
+  it('GET /api responds with 200 containing "Hello, Paul!" with proper authorization token', () => {
     return supertest(app)
-      .get('/')
+      .get('/api')
       .set('Authorization', 'Bearer ' + token)
       .expect(200, 'Hello, Paul!');
   });

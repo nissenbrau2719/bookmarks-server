@@ -20,9 +20,9 @@ app.use(cors());
 
 app.use(validateBearerToken);
 
-app.use('/bookmarks', bookmarksRouter);
+app.use('/api/bookmarks', bookmarksRouter);
 
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.send('Hello, Paul!');
 });
 

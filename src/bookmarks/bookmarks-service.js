@@ -29,10 +29,10 @@ const BookmarksService = {
       .delete()
   },
 
-  updateBookmark(knex, id, newBookmarkData) {
+  updateBookmark(knex, id, updatedBookmarkData) {
     return knex('bookmarks')
       .where({ id })
-      .update(newBookmarkData)
+      .update(updatedBookmarkData)
   },
 };
 
